@@ -30,7 +30,13 @@ static class UpdateChecker
 
             var json = await http.GetStringAsync(ApiUrl);
             using var doc = JsonDocument.Parse(json);
-            if (!doc.RootElement.TryGetProperty("tag_name", out var tagEl))
+            var root = doc.RootElement;
+            // /releases/latest は Pre-release を返さないが、念のため除外する
+            if (root.TryGetProperty("prerelease", out var pre) && pre.ValueKind == JsonValueKind.True)
+                return;
+            if (root.TryGetProperty("draft", out var draft) && draft.ValueKind == JsonValueKind.True)
+                return;
+            if (!root.TryGetProperty("tag_name", out var tagEl))
                 return;
 
             var tag = tagEl.GetString();
