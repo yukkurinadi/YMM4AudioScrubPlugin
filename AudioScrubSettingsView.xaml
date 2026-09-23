@@ -14,6 +14,6 @@
     <TextBlock Text="{Binding FrameCount, StringFormat={}{0} フレーム}" />
     <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" Opacity="0.75"
                Text="タイムライン停止中にシークバーを動かすと、その位置のミックス音声を短く再生します。再生中はスクラブしません。"/>
-    <TextBlock Margin="0,8,0,0" Opacity="0.6" Text="バージョン 1.0.0"/>
+    <TextBlock Margin="0,8,0,0" Opacity="0.6" Text="バージョン 1.0.3"/>
   </StackPanel>
 </UserControl>

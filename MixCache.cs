@@ -146,9 +146,33 @@ static class MixCache
             h = h * 31 + RuntimeHelpers.GetHashCode(item);
             h = h * 31 + Convert.ToInt32(AccessTools.Property(t, "Frame")?.GetValue(item) ?? 0);
             h = h * 31 + Convert.ToInt32(AccessTools.Property(t, "Length")?.GetValue(item) ?? 0);
+            h = h * 31 + Convert.ToInt32(AccessTools.Property(t, "Layer")?.GetValue(item) ?? 0);
             h = h * 31 + (AccessTools.Property(t, "IsHidden")?.GetValue(item) is true ? 1 : 0);
         }
-        return h * 31 + n;
+        h = h * 31 + n;
+        h = h * 31 + LayerStamp(timeline);
+        return h;
+    }
+
+    static long LayerStamp(object timeline)
+    {
+        var settings = AccessTools.Property(timeline.GetType(), "LayerSettings")?.GetValue(timeline);
+        var itemsObj = settings is null ? null : AccessTools.Property(settings.GetType(), "Items")?.GetValue(settings);
+        if (itemsObj is not System.Collections.IEnumerable layers)
+            return 0;
+        long h = 13;
+        foreach (var layer in layers)
+        {
+            if (layer is null)
+                continue;
+            var t = layer.GetType();
+            h = h * 31 + Convert.ToInt32(AccessTools.Property(t, "Layer")?.GetValue(layer) ?? 0);
+            h = h * 31 + (AccessTools.Property(t, "IsHidden")?.GetValue(layer) is true ? 1 : 0);
+            var vol = AccessTools.Property(t, "Volume")?.GetValue(layer);
+            if (vol is not null)
+                h = h * 31 + Convert.ToInt32(Convert.ToDouble(vol) * 10);
+        }
+        return h;
     }
 
     static void EnsureChunk(int index)

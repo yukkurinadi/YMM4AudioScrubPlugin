@@ -9,6 +9,8 @@ static class AudioScrubEngine
     static IWavePlayer? _player;
     static ScrubWaveProvider? _buffer;
     static int _deviceHz;
+    static int _lastUserFrame = int.MinValue;
+    static int _seekSeq;
 
     public static void OnPlayerCreated(object audioPlayer)
     {
@@ -35,7 +37,26 @@ static class AudioScrubEngine
             return;
 
         MixCache.Attach(timeline, scenes);
-        QueuePlay(FrameToTime(timeline, frame));
+        var time = FrameToTime(timeline, frame);
+        var fps = Math.Max(1, MixCache.Fps);
+        var jump = _lastUserFrame == int.MinValue ? 0 : Math.Abs(frame - _lastUserFrame);
+        _lastUserFrame = frame;
+        var seq = Interlocked.Increment(ref _seekSeq);
+
+        // ゆっくりドラッグでも Seek イベントは密集する。時間間隔では判定しない。
+        // 1回のジャンプが約0.3秒以上のタイムライン移動なら「早すぎ」とみなす。
+        var fastJump = Math.Max(6, fps / 3);
+        if (jump >= fastJump)
+        {
+            _ = Task.Delay(60).ContinueWith(_ =>
+            {
+                if (seq != Volatile.Read(ref _seekSeq))
+                    return;
+                QueuePlay(time);
+            });
+            return;
+        }
+        QueuePlay(time);
     }
 
     static void QueuePlay(TimeSpan time)
@@ -45,7 +66,7 @@ static class AudioScrubEngine
             return;
 
         var volume = (settings?.Volume ?? 100) / 100.0;
-        var frames = Math.Max(1, settings?.FrameCount ?? 1);
+        var frames = Math.Max(1, settings?.FrameCount ?? 2);
 
         _ = Task.Run(() =>
         {

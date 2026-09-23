@@ -23,6 +23,7 @@ static class HarmonyBootstrap
                 Patch(harmony, "YukkuriMovieMaker.ViewModels.PreviewViewModel", "SeekAsync", [typeof(int)]);
                 PatchAudioPlayerCtor(harmony);
                 PatchItemsSetter(harmony);
+                PatchLayerSettings(harmony);
                 _done = true;
                 AudioScrubLog.Write("Harmony patches applied");
             }
@@ -74,6 +75,20 @@ static class HarmonyBootstrap
         var postfix = AccessTools.Method(typeof(SeekHooks), nameof(SeekHooks.AfterItemsChanged));
         harmony.Patch(setter, postfix: new HarmonyMethod(postfix));
         AudioScrubLog.Write("patched Timeline.Items");
+    }
+
+    static void PatchLayerSettings(Harmony harmony)
+    {
+        var type = AccessTools.TypeByName("YukkuriMovieMaker.Project.LayerSettings");
+        var setter = type is null ? null : AccessTools.Property(type, "Items")?.GetSetMethod(true);
+        if (setter is null)
+        {
+            AudioScrubLog.Write("LayerSettings.Items setter missing");
+            return;
+        }
+        var postfix = AccessTools.Method(typeof(SeekHooks), nameof(SeekHooks.AfterItemsChanged));
+        harmony.Patch(setter, postfix: new HarmonyMethod(postfix));
+        AudioScrubLog.Write("patched LayerSettings.Items");
     }
 }
 

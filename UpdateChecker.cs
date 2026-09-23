@@ -7,7 +7,7 @@ namespace AudioScrub;
 
 static class UpdateChecker
 {
-    public const string CurrentVersion = "1.0.0";
+    public const string CurrentVersion = "1.0.3";
     const string ApiUrl = "https://api.github.com/repos/yukkurinadi/YMM4AudioScrubPlugin/releases/latest";
     const string ReleasesUrl = "https://github.com/yukkurinadi/YMM4AudioScrubPlugin/releases";
 
